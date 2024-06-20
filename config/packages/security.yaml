@@ -32,7 +32,6 @@ security:
             pattern: ^/api/logout
             stateless: true
             logout:
-                path: /api/logout
                 invalidate_session: false
 
         api:

@@ -51,6 +51,7 @@ class UtilisateurController extends AbstractController
         $this->tokenStorage = $tokenStorage;
     }
 
+    
     /**
      * Retourne les détails de l'utilisateur connecté à partir du token.
      */
@@ -70,7 +71,7 @@ class UtilisateurController extends AbstractController
         }
 
         $data = $this->serializer->serialize($user, 'json', [
-            AbstractNormalizer::IGNORED_ATTRIBUTES => ['entreprise', 'allergenes', 'commandes']
+            'groups' => ['user:read', 'user:allergies']
         ]);
 
         return JsonResponse::fromJsonString($data, Response::HTTP_OK);
@@ -95,44 +96,6 @@ class UtilisateurController extends AbstractController
         return JsonResponse::fromJsonString($data, Response::HTTP_OK);
     }
 
-    /**
-     * Crée un nouvel utilisateur.
-     */
-    #[Route('/', name: 'utilisateur_new', methods: ['POST'])]
-    public function new(Request $request): JsonResponse
-    {
-        $jsonData = json_decode($request->getContent(), true);
-
-        $user = new Utilisateur();
-        $user->setEmail($jsonData['email']);
-        $user->setRoles($jsonData['roles']);
-        $user->setNom($jsonData['nom']);
-        $user->setPrenom($jsonData['prenom']);
-        $user->setDateDeNaissance(new \DateTime($jsonData['date_de_naissance']));
-        $user->setTelephone($jsonData['telephone']);
-
-        $entreprise = $this->em->getRepository('App\Entity\Entreprise')->find($jsonData['entreprise_id']);
-        if (!$entreprise) {
-            return new JsonResponse(['error' => 'Invalid entreprise ID'], JsonResponse::HTTP_BAD_REQUEST);
-        }
-        $user->setEntreprise($entreprise);
-
-        $hashedPassword = $this->passwordHasher->hashPassword(
-            $user,
-            $jsonData['password']
-        );
-        $user->setPassword($hashedPassword);
-
-        $errors = $this->validator->validate($user);
-        if (count($errors) > 0) {
-            return $this->json($errors, Response::HTTP_BAD_REQUEST);
-        }
-
-        $this->em->persist($user);
-        $this->em->flush();
-
-        return $this->json($user, Response::HTTP_CREATED);
-    }
 
     /**
      * Met à jour un utilisateur spécifique.
@@ -169,4 +132,6 @@ class UtilisateurController extends AbstractController
 
         return $this->json($user, Response::HTTP_OK);
     }
+
+    
 }

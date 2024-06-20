@@ -15,6 +15,7 @@ use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Security\Http\Authentication\AuthenticationUtils;
 use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
+use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface;
 use Psr\Log\LoggerInterface;
 
 #[Route('/api')]
@@ -25,19 +26,22 @@ class AuthController extends AbstractController
     private UserPasswordHasherInterface $passwordHasher;
     private LoggerInterface $logger;
     private ManagerRegistry $doctrine;
+    private JWTTokenManagerInterface $jwtManager;
 
     public function __construct(
         UtilisateurRepository $utilisateurRepository,
         SerializerInterface $serializer,
         UserPasswordHasherInterface $passwordHasher,
         LoggerInterface $logger,
-        ManagerRegistry $doctrine
+        ManagerRegistry $doctrine,
+        JWTTokenManagerInterface $jwtManager
     ) {
         $this->utilisateurRepository = $utilisateurRepository;
         $this->serializer = $serializer;
         $this->passwordHasher = $passwordHasher;
         $this->logger = $logger;
         $this->doctrine = $doctrine;
+        $this->jwtManager = $jwtManager;
     }
 
     /**
@@ -45,12 +49,11 @@ class AuthController extends AbstractController
      *
      * @param Request $request La requête HTTP contenant les données de l'utilisateur.
      * @param EntrepriseRepository $entrepriseRepository Le repository des entreprises.
-     * @return JsonResponse La réponse en JSON avec les détails de l'utilisateur créé.
+     * @return JsonResponse La réponse en JSON avec les détails de l'utilisateur créé et le token.
      */
     #[Route('/register', name: 'user.register', methods: ['POST'])]
     public function register(Request $request, EntrepriseRepository $entrepriseRepository): JsonResponse
     {
-        dump('Function start');
         $this->logger->info('Received registration request');
 
         $jsonData = json_decode($request->getContent(), true);
@@ -87,40 +90,43 @@ class AuthController extends AbstractController
         try {
             $this->utilisateurRepository->save($user);
             $this->logger->info('User saved successfully', ['user' => $user]);
+
+            $token = $this->jwtManager->create($user);
+
+            return new JsonResponse([
+                'user' => json_decode($this->serializer->serialize($user, 'json', ['groups' => ['user:read']]), true),
+                'token' => $token
+            ], JsonResponse::HTTP_CREATED);
         } catch (\Exception $e) {
             $this->logger->error('Unable to save user', ['exception' => $e->getMessage()]);
             return new JsonResponse(['error' => 'Unable to save user: ' . $e->getMessage()], JsonResponse::HTTP_INTERNAL_SERVER_ERROR);
         }
-
-        return new JsonResponse([
-            'user' => json_decode($this->serializer->serialize($user, 'json', ['groups' => ['user:read']]), true)
-        ], JsonResponse::HTTP_CREATED);
     }
 
     /**
      * Connexion d'un utilisateur.
      *
      * @param AuthenticationUtils $authenticationUtils Utilitaire d'authentification.
-     * @return JsonResponse La réponse en JSON avec les détails de l'utilisateur authentifié.
+     * @return JsonResponse La réponse en JSON avec les détails de l'utilisateur authentifié et le token.
      */
     #[Route('/login', name: 'user.login', methods: ['POST'])]
     public function login(AuthenticationUtils $authenticationUtils): JsonResponse
     {
-        dump('Function start');
         $error = $authenticationUtils->getLastAuthenticationError();
         if ($error) {
             return new JsonResponse(['error' => $error->getMessageKey()], JsonResponse::HTTP_UNAUTHORIZED);
         }
 
         $user = $this->getUser();
-        dump($user);
-        dump('test');
         if (!$user instanceof UserInterface) {
             return new JsonResponse(['error' => 'Invalid credentials'], JsonResponse::HTTP_UNAUTHORIZED);
         }
 
+        $token = $this->jwtManager->create($user);
+
         return new JsonResponse([
-            'user' => json_decode($this->serializer->serialize($user, 'json', ['groups' => ['user:read']]), true)
+            'user' => json_decode($this->serializer->serialize($user, 'json', ['groups' => ['user:read']]), true),
+            'token' => $token
         ], JsonResponse::HTTP_OK);
     }
 
@@ -132,8 +138,7 @@ class AuthController extends AbstractController
     #[Route('/logout', name: 'user.logout', methods: ['POST'])]
     public function logout(): JsonResponse
     {
-        throw new \Exception('This method can be blank - it will be intercepted by the logout key on your firewall');
+        return new JsonResponse(['message' => 'Logout successful'], JsonResponse::HTTP_OK);
     }
-
-
 }
+

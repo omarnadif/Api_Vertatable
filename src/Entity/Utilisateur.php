@@ -53,9 +53,11 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
     #[Groups(['user:read'])]
     private ?Entreprise $entreprise = null;
 
+    #[Groups(['user:read'])]
     #[ORM\OneToMany(mappedBy: 'utilisateur', targetEntity: Commande::class)]
     private Collection $commandes;
 
+    #[Groups(['user:read'])]
     #[ORM\ManyToMany(targetEntity: Allergene::class, mappedBy: 'utilisateur')]
     private Collection $allergenes;
 
