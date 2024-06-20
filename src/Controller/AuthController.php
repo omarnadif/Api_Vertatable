@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Controller;
 
 use App\Entity\Utilisateur;
@@ -31,8 +32,7 @@ class AuthController extends AbstractController
         UserPasswordHasherInterface $passwordHasher,
         LoggerInterface $logger,
         ManagerRegistry $doctrine
-    )
-    {
+    ) {
         $this->utilisateurRepository = $utilisateurRepository;
         $this->serializer = $serializer;
         $this->passwordHasher = $passwordHasher;
@@ -50,6 +50,7 @@ class AuthController extends AbstractController
     #[Route('/register', name: 'user.register', methods: ['POST'])]
     public function register(Request $request, EntrepriseRepository $entrepriseRepository): JsonResponse
     {
+        dump('Function start');
         $this->logger->info('Received registration request');
 
         $jsonData = json_decode($request->getContent(), true);
@@ -105,12 +106,15 @@ class AuthController extends AbstractController
     #[Route('/login', name: 'user.login', methods: ['POST'])]
     public function login(AuthenticationUtils $authenticationUtils): JsonResponse
     {
+        dump('Function start');
         $error = $authenticationUtils->getLastAuthenticationError();
         if ($error) {
             return new JsonResponse(['error' => $error->getMessageKey()], JsonResponse::HTTP_UNAUTHORIZED);
         }
 
         $user = $this->getUser();
+        dump($user);
+        dump('test');
         if (!$user instanceof UserInterface) {
             return new JsonResponse(['error' => 'Invalid credentials'], JsonResponse::HTTP_UNAUTHORIZED);
         }
@@ -130,5 +134,6 @@ class AuthController extends AbstractController
     {
         throw new \Exception('This method can be blank - it will be intercepted by the logout key on your firewall');
     }
-}
 
+
+}
