@@ -6,6 +6,7 @@ use App\Repository\CommandeRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
+use Symfony\Component\Serializer\Annotation\Groups;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: CommandeRepository::class)]
@@ -14,24 +15,32 @@ class Commande
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['user:read', 'user:write'])]
     private ?int $id = null;
 
     #[ORM\Column(type: Types::DATE_MUTABLE)]
+    #[Groups(['user:read', 'user:write'])]
     private ?\DateTimeInterface $dateCommande = null;
 
     #[ORM\Column(length: 20)]
+    #[Groups(['user:read', 'user:write'])]
+
     private ?string $etat = null;
 
     #[ORM\Column]
+    #[Groups(['user:read', 'user:write'])]
     private ?int $quantite = null;
 
     #[ORM\Column(length: 50)]
+    #[Groups(['user:read', 'user:write'])]
     private ?string $note = null;
 
     #[ORM\Column(type: Types::DATE_MUTABLE)]
+    #[Groups(['user:read', 'user:write'])]
     private ?\DateTimeInterface $dateAvis = null;
 
     #[ORM\Column(length: 255)]
+    #[Groups(['user:read', 'user:write'])]
     private ?string $commentaire = null;
 
 
@@ -40,6 +49,7 @@ class Commande
     private ?Utilisateur $utilisateur = null;
 
     #[ORM\ManyToMany(targetEntity: Plat::class, inversedBy: 'commandes')]
+    #[Groups(['user:read', 'user:write'])]
     private Collection $plat;
 
     public function __construct()

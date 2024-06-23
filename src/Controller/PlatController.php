@@ -76,5 +76,27 @@ class PlatController extends AbstractController
     
         return JsonResponse::fromJsonString($data, Response::HTTP_OK);
     }
-    
+
+    #[Route('/available', name: 'plat_available', methods: ['GET'])]
+    public function getPlatsByDate(Request $request): JsonResponse
+    {
+        $dateString = $request->query->get('date');
+
+        if (!$dateString) {
+            return $this->json(['error' => 'Date is required'], Response::HTTP_BAD_REQUEST);
+        }
+
+        try {
+            $date = new \DateTime($dateString);
+        } catch (\Exception $e) {
+            return $this->json(['error' => 'Invalid date format'], Response::HTTP_BAD_REQUEST);
+        }
+
+        $plats = $this->platRepository->findBy(['date_disponibilite' => $date]);
+
+        $data = $this->serializer->serialize($plats, 'json', [AbstractNormalizer::IGNORED_ATTRIBUTES => ['commandes', 'categorie', 'allergene']]);
+
+        return JsonResponse::fromJsonString($data, Response::HTTP_OK);
+    }
 }
+

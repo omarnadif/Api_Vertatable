@@ -7,6 +7,8 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Annotation\Groups;
+
 
 #[ORM\Entity(repositoryClass: PlatRepository::class)]
 class Plat
@@ -14,21 +16,26 @@ class Plat
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    
     private ?int $id = null;
-
+    #[Groups(['user:read', 'user:write'])]
     #[ORM\Column(length: 20)]
     private ?string $nom = null;
 
     #[ORM\Column(length: 255)]
+    #[Groups(['user:read', 'user:write'])]
     private ?string $description = null;
 
     #[ORM\Column(type: Types::DATE_MUTABLE)]
+    #[Groups(['user:read', 'user:write'])]
     private ?\DateTimeInterface $date_disponibilite = null;
 
     #[ORM\Column(length: 255, nullable: true)]
+    #[Groups(['user:read', 'user:write'])]
     private ?string $image = null;
 
     #[ORM\Column(type: Types::JSON, nullable: true)]
+    #[Groups(['user:read', 'user:write'])]
     private ?array $ingredients = null;
 
     #[ORM\ManyToMany(targetEntity: Commande::class, mappedBy: 'plat')]

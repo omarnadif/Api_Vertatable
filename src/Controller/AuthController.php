@@ -2,10 +2,12 @@
 
 namespace App\Controller;
 
+use App\Entity\Allergene;
 use App\Entity\Utilisateur;
 use App\Entity\Entreprise;
 use App\Repository\UtilisateurRepository;
 use App\Repository\EntrepriseRepository;
+use App\Repository\AllergeneRepository;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -52,7 +54,7 @@ class AuthController extends AbstractController
      * @return JsonResponse La réponse en JSON avec les détails de l'utilisateur créé et le token.
      */
     #[Route('/register', name: 'user.register', methods: ['POST'])]
-    public function register(Request $request, EntrepriseRepository $entrepriseRepository): JsonResponse
+    public function register(Request $request, EntrepriseRepository $entrepriseRepository, AllergeneRepository $allergeneRepository): JsonResponse
     {
         $this->logger->info('Received registration request');
 
@@ -85,6 +87,16 @@ class AuthController extends AbstractController
         );
         $user->setPassword($hashedPassword);
 
+        //Allergies 
+        if (isset($jsonData['allergenes']) && is_array($jsonData['allergenes'])) {
+            foreach ($jsonData['allergenes'] as $allergeneId) {
+                $allergene = $allergeneRepository->find($allergeneId);
+                if ($allergene) {
+                    $user->addAllergene($allergene);
+                }
+            }
+        }
+
         $this->logger->info('Password hashed successfully', ['hashedPassword' => $hashedPassword]);
 
         try {
@@ -94,7 +106,7 @@ class AuthController extends AbstractController
             $token = $this->jwtManager->create($user);
 
             return new JsonResponse([
-                'user' => json_decode($this->serializer->serialize($user, 'json', ['groups' => ['user:read']]), true),
+                'user' => json_decode($this->serializer->serialize($user, 'json', ['groups' => ['user:read', 'user:allergies']]), true),
                 'token' => $token
             ], JsonResponse::HTTP_CREATED);
         } catch (\Exception $e) {

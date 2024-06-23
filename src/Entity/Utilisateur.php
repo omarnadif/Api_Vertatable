@@ -18,7 +18,7 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(['user:read'])]
+    #[Groups(['user:read', 'user:write', 'commande:read'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 180)]
@@ -26,7 +26,7 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
     private ?string $email = null;
 
     #[ORM\Column(type: 'json')]
-    #[Groups(['user:read'])]
+    #[Groups(['user:read', 'user:write'])]
     private array $roles = [];
 
     #[ORM\Column(length: 255)]
@@ -50,15 +50,15 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
 
     #[ORM\ManyToOne(inversedBy: 'utilisateurs')]
     #[ORM\JoinColumn(nullable: false)]
-    #[Groups(['user:read'])]
+    #[Groups(['user:read', 'user:write'])]
     private ?Entreprise $entreprise = null;
 
-    #[Groups(['user:read'])]
     #[ORM\OneToMany(mappedBy: 'utilisateur', targetEntity: Commande::class)]
+    #[Groups(['user:read', 'user:write'])]
     private Collection $commandes;
 
-    #[Groups(['user:read'])]
     #[ORM\ManyToMany(targetEntity: Allergene::class, mappedBy: 'utilisateur')]
+    #[Groups(['user:read', 'user:write'])]
     private Collection $allergenes;
 
     public function __construct() {
@@ -79,7 +79,6 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
     public function setEmail(string $email): static
     {
         $this->email = $email;
-
         return $this;
     }
 
@@ -92,14 +91,12 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
     {
         $roles = $this->roles;
         $roles[] = 'ROLE_USER';
-
         return array_unique($roles);
     }
 
     public function setRoles(array $roles): static
     {
         $this->roles = $roles;
-
         return $this;
     }
 
@@ -111,7 +108,6 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
     public function setPassword(string $password): static
     {
         $this->password = $password;
-
         return $this;
     }
 
@@ -129,7 +125,6 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
     public function setNom(string $nom): static
     {
         $this->nom = $nom;
-
         return $this;
     }
 
@@ -141,7 +136,6 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
     public function setPrenom(string $prenom): self
     {
         $this->prenom = $prenom;
-
         return $this;
     }
 
@@ -153,7 +147,6 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
     public function setDateDeNaissance(\DateTimeInterface $date_de_naissance): self
     {
         $this->date_de_naissance = $date_de_naissance;
-
         return $this;
     }
 
@@ -165,7 +158,6 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
     public function setTelephone(string $telephone): self
     {
         $this->telephone = $telephone;
-
         return $this;
     }
 
@@ -177,7 +169,6 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
     public function setEntreprise(Entreprise $entreprise): self
     {
         $this->entreprise = $entreprise;
-
         return $this;
     }
 
@@ -192,7 +183,6 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
             $this->allergenes->add($allergene);
             $allergene->addUtilisateur($this);
         }
-
         return $this;
     }
 
@@ -201,8 +191,12 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
         if ($this->allergenes->removeElement($allergene)) {
             $allergene->removeUtilisateur($this);
         }
-
         return $this;
+    }
+
+    public function getCommandes(): Collection
+    {
+        return $this->commandes;
     }
 
     public function addCommande(Commande $commande): self
@@ -211,7 +205,6 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
             $this->commandes->add($commande);
             $commande->setUtilisateur($this);
         }
-
         return $this;
     }
 
@@ -222,7 +215,6 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
                 $commande->setUtilisateur(null);
             }
         }
-
         return $this;
     }
 }
